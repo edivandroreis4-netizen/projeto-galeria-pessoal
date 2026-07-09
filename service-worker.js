@@ -1,5 +1,5 @@
-const CACHE_NAME = 'galeria-pessoal-v7';
-const RUNTIME_CACHE = 'galeria-pessoal-runtime-v6';
+const CACHE_NAME = 'galeria-pessoal-v9';
+const RUNTIME_CACHE = 'galeria-pessoal-runtime-v8';
 
 const APP_SHELL = [
   './',

@@ -30,7 +30,6 @@ const elements = {
   emptyUploadButton: document.querySelector('#emptyUploadButton'),
   savePhotosButton: document.querySelector('#savePhotosButton'),
   clearGalleryButton: document.querySelector('#clearGalleryButton'),
-  pastePhotoButton: document.querySelector('#pastePhotoButton'),
   photoInput: document.querySelector('#photoInput'),
   photoCategory: document.querySelector('#photoCategory'),
   photoDescription: document.querySelector('#photoDescription'),
@@ -145,17 +144,31 @@ function getOriginalName(photo) {
   return photo.nomeOriginal || photo.nome || getDisplayTitle(photo);
 }
 
-function getTimestampForFileName() {
-  return new Intl.DateTimeFormat('pt-BR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-    .format(new Date())
-    .replace(/\D/g, '');
+
+function getFileExtensionFromType(type = '') {
+  const extensions = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+    'image/avif': 'avif'
+  };
+
+  return extensions[type] || 'jpg';
+}
+
+function createSafeFileName(photo, fallbackPrefix = 'foto-galeria') {
+  const title = getDisplayTitle(photo) || fallbackPrefix;
+  const extension = getFileExtensionFromType(photo.tipo || photo.arquivo?.type);
+  const baseName = title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48) || fallbackPrefix;
+
+  return `${baseName}.${extension}`;
 }
 
 function revokeObjectUrls() {
@@ -391,9 +404,9 @@ function renderGallery() {
             <span>${photo.favorita ? 'Favorita' : 'Favoritar'}</span>
           </button>
 
-          <button class="action-button" type="button" data-action="copy" aria-label="Copiar foto para a área de transferência">
-            <i class="ph-duotone ph-copy" aria-hidden="true"></i>
-            <span>Copiar</span>
+          <button class="action-button action-button--share" type="button" data-action="share" aria-label="Compartilhar foto">
+            <i class="ph-duotone ph-share-network" aria-hidden="true"></i>
+            <span>Compartilhar</span>
           </button>
 
           <button class="action-button" type="button" data-action="edit" aria-label="Editar título e categoria da foto">
@@ -536,106 +549,28 @@ async function handleSavePhotos() {
   }
 }
 
-function convertBlobToPng(blob) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    const url = URL.createObjectURL(blob);
+async function sharePhoto(photo) {
+  if (!navigator.share) {
+    throw new Error('Este navegador não oferece suporte para compartilhamento nativo.');
+  }
 
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-
-      const context = canvas.getContext('2d');
-      context.drawImage(image, 0, 0);
-      URL.revokeObjectURL(url);
-
-      canvas.toBlob((pngBlob) => {
-        if (!pngBlob) {
-          reject(new Error('Não foi possível converter a imagem para PNG.'));
-          return;
-        }
-
-        resolve(pngBlob);
-      }, 'image/png');
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Não foi possível carregar a foto para cópia.'));
-    };
-
-    image.src = url;
+  const fileType = photo.tipo || photo.arquivo?.type || 'image/jpeg';
+  const shareFile = new File([photo.arquivo], createSafeFileName(photo), {
+    type: fileType,
+    lastModified: Date.now()
   });
-}
 
-async function copyPhotoToClipboard(photo) {
-  if (!navigator.clipboard?.write || !window.ClipboardItem) {
-    throw new Error('Este navegador não oferece suporte para copiar imagens.');
+  const shareData = {
+    title: getDisplayTitle(photo),
+    text: 'Foto compartilhada pelo app Galeria Pessoal.',
+    files: [shareFile]
+  };
+
+  if (navigator.canShare && !navigator.canShare({ files: [shareFile] })) {
+    throw new Error('Este navegador não permite compartilhar esta imagem como arquivo.');
   }
 
-  const pngBlob = await convertBlobToPng(photo.arquivo);
-  await navigator.clipboard.write([
-    new ClipboardItem({ 'image/png': pngBlob })
-  ]);
-}
-
-async function readImageFromClipboard() {
-  if (!navigator.clipboard?.read) {
-    throw new Error('Este navegador não oferece suporte para colar imagens.');
-  }
-
-  const clipboardItems = await navigator.clipboard.read();
-
-  for (const item of clipboardItems) {
-    const imageType = item.types.find((type) => type.startsWith('image/'));
-
-    if (imageType) {
-      const blob = await item.getType(imageType);
-      const extension = imageType.includes('jpeg') ? 'jpg' : 'png';
-      return new File([blob], `foto-colada-${getTimestampForFileName()}.${extension}`, {
-        type: blob.type || imageType
-      });
-    }
-  }
-
-  throw new Error('Nenhuma imagem foi encontrada na área de transferência.');
-}
-
-async function handlePastePhoto() {
-  try {
-    const file = await readImageFromClipboard();
-    const category = elements.photoCategory.value || 'Outras';
-    const description = elements.photoDescription.value.trim() || 'Imagem colada da área de transferência.';
-
-    const result = await Swal.fire({
-      icon: 'question',
-      title: 'Colar foto na galeria?',
-      text: `A imagem copiada será salva na categoria ${category}.`,
-      showCancelButton: true,
-      confirmButtonText: 'Sim, colar',
-      cancelButtonText: 'Cancelar'
-    });
-
-    if (!result.isConfirmed) return;
-
-    const summary = await saveFilesToGallery([file], category, description);
-    const savingsPercent = calculateSavingsPercent(summary.originalBytes, summary.optimizedBytes);
-
-    toast.fire({
-      icon: 'success',
-      title: savingsPercent > 0
-        ? `Foto colada e otimizada com ${savingsPercent}% menos espaço.`
-        : 'Foto colada na galeria.'
-    });
-  } catch (error) {
-    console.error(error);
-    Swal.fire({
-      icon: 'info',
-      title: 'Não foi possível colar a foto',
-      text: 'Copie uma imagem antes de usar esse botão. Em alguns navegadores, copiar e colar imagens só funciona em HTTPS ou localhost.'
-    });
-  }
+  await navigator.share(shareData);
 }
 
 async function handleGalleryAction(event) {
@@ -660,16 +595,18 @@ async function handleGalleryAction(event) {
     });
   }
 
-  if (action === 'copy') {
+  if (action === 'share') {
     try {
-      await copyPhotoToClipboard(photo);
-      toast.fire({ icon: 'success', title: 'Foto copiada.' });
+      await sharePhoto(photo);
     } catch (error) {
+      if (error.name === 'AbortError') return;
+
       console.error(error);
+
       Swal.fire({
         icon: 'info',
-        title: 'Não foi possível copiar',
-        text: 'Copiar imagens depende do suporte do navegador e normalmente exige HTTPS ou localhost.'
+        title: 'Compartilhamento indisponível',
+        text: 'Seu navegador não permitiu compartilhar esta foto diretamente. Tente pelo celular, pelo app instalado ou por outro navegador compatível com compartilhamento de arquivos.'
       });
     }
   }
@@ -817,7 +754,6 @@ function bindEvents() {
   });
 
   elements.savePhotosButton.addEventListener('click', handleSavePhotos);
-  elements.pastePhotoButton.addEventListener('click', handlePastePhoto);
   elements.clearGalleryButton.addEventListener('click', handleClearGallery);
   elements.galleryGrid.addEventListener('click', handleGalleryAction);
   elements.galleryGrid.addEventListener('pointerdown', handleCardTouchFeedback);

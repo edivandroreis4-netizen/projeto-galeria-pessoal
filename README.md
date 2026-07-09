@@ -26,6 +26,7 @@ Aplicativo de galeria pessoal com upload, organização, busca, favoritos, visua
 - Área de favoritas
 - Busca por nome, categoria ou descrição
 - Visualização em tela cheia com PhotoSwipe
+- Compartilhamento de fotos pelo menu nativo do celular quando disponível
 - Edição de categoria
 - Exclusão com confirmação
 - Limpeza total da galeria
@@ -97,12 +98,7 @@ O projeto inclui um rodapé discreto com a foto do autor em `src/assets/images/e
 - O botão de edição agora permite alterar título e categoria da foto.
 - Botões de ação possuem `aria-label`, melhorando acessibilidade no mobile com ícones.
 - Adicionado seletor de proporção: **Inteira** ou **Preencher**.
-- Adicionado botão **Copiar** nos cards para copiar imagem para a área de transferência quando o navegador permitir.
-- Adicionado botão **Colar foto** para salvar no app uma imagem copiada para a área de transferência.
-
-### Observação sobre copiar e colar imagens
-
-O recurso depende do suporte do navegador à Clipboard API. Em geral, funciona melhor em `localhost` durante desenvolvimento ou em sites publicados com HTTPS, como Vercel.
+- O recurso de copiar e colar imagens foi avaliado como opcional e removido em versão posterior para simplificar a experiência mobile.
 
 
 ## Ajuste 1.0.4
@@ -134,3 +130,21 @@ Essa configuração reduz o peso das fotos sem tentar destruir a qualidade visua
 - Área de pesquisa recebeu espaçamento e padding ajustados para telas pequenas.
 - Fotos agora possuem feedback visual ao tocar no celular, melhorando a sensação de interação.
 - O cache da PWA foi atualizado novamente para carregar CSS e JavaScript novos.
+
+
+## Atualização 1.0.6
+
+- Adicionado botão **Compartilhar** em cada foto.
+- No celular, o botão abre o compartilhamento nativo do sistema quando o navegador permite.
+- Se o compartilhamento direto não estiver disponível, o aplicativo exibe uma mensagem orientando o usuário a tentar no celular, no app instalado ou em navegador compatível.
+- Ajustado o grid de ações no mobile para comportar quatro botões: Favoritar, Compartilhar, Editar e Excluir.
+- Atualizado o cache da PWA para carregar a nova versão do JavaScript e CSS.
+
+
+## Atualização 1.0.7
+
+- Removido o botão **Copiar** dos cards da galeria.
+- Removido o botão **Colar foto** do topo do aplicativo.
+- A interface mobile ficou mais limpa, com quatro ações principais por foto: Favoritar, Compartilhar, Editar e Excluir.
+- O compartilhamento continua ativo por meio da Web Share API quando o navegador/dispositivo permite.
+- Atualizado o cache da PWA para evitar carregamento da versão anterior.
