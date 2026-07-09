@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="description" content="Galeria Pessoal: organize, pesquise, favorite e armazene suas fotos no navegador." />
+
+  <title>Galeria Pessoal</title>
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./src/assets/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="./src/assets/icons/icon-192.png" />
+
+  <!-- Phosphor Icons Duotone -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.css" />
+
+  <!-- FilePond -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/filepond@4/dist/filepond.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/filepond-plugin-image-preview@4/dist/filepond-plugin-image-preview.min.css" />
+
+  <!-- PhotoSwipe -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@5/dist/photoswipe.css" />
+
+  <link rel="stylesheet" href="./src/css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Pular para o conteúdo principal</a>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Menu principal">
+      <div class="sidebar__brand">
+        <div class="app-icon" aria-hidden="true">
+          <i class="ph-duotone ph-images-square"></i>
+        </div>
+
+        <div>
+          <p class="eyebrow">App pessoal</p>
+          <h1>Galeria Pessoal</h1>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav" aria-label="Categorias rápidas">
+        <button class="nav-button is-active" type="button" data-filter-category="Todas">
+          <i class="ph-duotone ph-squares-four" aria-hidden="true"></i>
+          <span>Todas</span>
+        </button>
+
+        <button class="nav-button" type="button" data-filter-category="Favoritas">
+          <i class="ph-duotone ph-heart" aria-hidden="true"></i>
+          <span>Favoritas</span>
+        </button>
+
+        <button class="nav-button" type="button" data-filter-category="Família">
+          <i class="ph-duotone ph-users-three" aria-hidden="true"></i>
+          <span>Família</span>
+        </button>
+
+        <button class="nav-button" type="button" data-filter-category="Viagens">
+          <i class="ph-duotone ph-airplane-tilt" aria-hidden="true"></i>
+          <span>Viagens</span>
+        </button>
+
+        <button class="nav-button" type="button" data-filter-category="Projetos">
+          <i class="ph-duotone ph-code" aria-hidden="true"></i>
+          <span>Projetos</span>
+        </button>
+      </nav>
+
+      <div class="storage-card" aria-label="Resumo da galeria">
+        <div class="storage-card__icon" aria-hidden="true">
+          <i class="ph-duotone ph-database"></i>
+        </div>
+        <div>
+          <strong id="storageCount">0 fotos</strong>
+          <span>Salvas no navegador com IndexedDB</span>
+        </div>
+      </div>
+
+      <footer class="sidebar__footer author-footer" aria-label="Crédito do desenvolvedor">
+        <img
+          class="author-footer__avatar"
+          src="./src/assets/images/edivandro-lima.jpg"
+          alt="Foto de Edivandro Lima"
+          loading="lazy"
+        />
+
+        <div class="author-footer__text">
+          <span>Desenvolvido por</span>
+          <strong>Edivandro Lima</strong>
+        </div>
+      </footer>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <header class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">Upload • Organização • Armazenamento local</p>
+          <h2>Organize suas fotos em uma galeria moderna</h2>
+          <p>
+            Envie imagens, categorize, favorite, pesquise por nome ou descrição e visualize em tela cheia.
+          </p>
+        </div>
+
+        <div class="hero__actions">
+          <button class="button button--primary" type="button" id="openUploadPanel">
+            <i class="ph-duotone ph-upload-simple" aria-hidden="true"></i>
+            <span>Enviar fotos</span>
+          </button>
+
+          <button class="button button--ghost" type="button" id="pastePhotoButton">
+            <i class="ph-duotone ph-clipboard-text" aria-hidden="true"></i>
+            <span>Colar foto</span>
+          </button>
+
+          <button class="button button--ghost" type="button" id="clearGalleryButton">
+            <i class="ph-duotone ph-trash" aria-hidden="true"></i>
+            <span>Limpar galeria</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="dashboard" aria-label="Indicadores da galeria">
+        <article class="stat-card">
+          <i class="ph-duotone ph-images" aria-hidden="true"></i>
+          <div>
+            <span>Total</span>
+            <strong id="totalPhotos">0</strong>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <i class="ph-duotone ph-heart" aria-hidden="true"></i>
+          <div>
+            <span>Favoritas</span>
+            <strong id="favoritePhotos">0</strong>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <i class="ph-duotone ph-folder-open" aria-hidden="true"></i>
+          <div>
+            <span>Categorias</span>
+            <strong id="totalCategories">0</strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="upload-panel" id="uploadPanel" aria-labelledby="uploadTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Novo upload</p>
+            <h2 id="uploadTitle">Adicionar fotos</h2>
+          </div>
+
+          <button class="icon-button" type="button" id="closeUploadPanel" aria-label="Fechar painel de upload">
+            <i class="ph-duotone ph-x" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="upload-grid">
+          <div class="form-group">
+            <label for="photoCategory">Categoria</label>
+            <select id="photoCategory">
+              <option value="Família">Família</option>
+              <option value="Viagens">Viagens</option>
+              <option value="Trabalho">Trabalho</option>
+              <option value="Projetos">Projetos</option>
+              <option value="Outras">Outras</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="photoDescription">Descrição ou tags</label>
+            <input id="photoDescription" type="text" placeholder="Ex: praia, aniversário, portfólio" maxlength="80" />
+          </div>
+        </div>
+
+        <input class="filepond" id="photoInput" type="file" name="photos" accept="image/*" multiple />
+
+        <div class="upload-actions">
+          <p class="helper-text">
+            Compressão automática ativa: imagens grandes são otimizadas antes de salvar para ocupar menos espaço no navegador.
+          </p>
+
+          <button class="button button--primary" type="button" id="savePhotosButton">
+            <i class="ph-duotone ph-floppy-disk" aria-hidden="true"></i>
+            <span>Salvar na galeria</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="Filtros da galeria">
+        <div class="search-box">
+          <i class="ph-duotone ph-magnifying-glass" aria-hidden="true"></i>
+          <label class="sr-only" for="searchInput">Pesquisar fotos</label>
+          <input id="searchInput" type="search" placeholder="Pesquisar por nome, categoria ou descrição" autocomplete="off" />
+        </div>
+
+        <div class="filter-group">
+          <label for="categoryFilter">Filtrar</label>
+          <select id="categoryFilter">
+            <option value="Todas">Todas</option>
+            <option value="Favoritas">Favoritas</option>
+            <option value="Família">Família</option>
+            <option value="Viagens">Viagens</option>
+            <option value="Trabalho">Trabalho</option>
+            <option value="Projetos">Projetos</option>
+            <option value="Outras">Outras</option>
+          </select>
+        </div>
+
+        <div class="view-toggle" role="group" aria-label="Modo de visualização das fotos">
+          <span class="view-toggle__label">Visualização</span>
+          <div class="view-toggle__options">
+            <button class="view-toggle__button is-active" type="button" data-view-mode="contain" aria-pressed="true">
+              <i class="ph-duotone ph-frame-corners" aria-hidden="true"></i>
+              <span>Inteira</span>
+            </button>
+
+            <button class="view-toggle__button" type="button" data-view-mode="cover" aria-pressed="false">
+              <i class="ph-duotone ph-arrows-out-cardinal" aria-hidden="true"></i>
+              <span>Preencher</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="gallery-section" aria-labelledby="galleryTitle">
+        <div class="section-heading section-heading--compact">
+          <div>
+            <p class="eyebrow">Sua coleção</p>
+            <h2 id="galleryTitle">Fotos salvas</h2>
+          </div>
+
+          <span class="result-count" id="resultCount">0 resultado</span>
+        </div>
+
+        <div class="gallery-grid" id="galleryGrid" aria-live="polite"></div>
+
+        <div class="empty-state" id="emptyState">
+          <div class="empty-state__icon" aria-hidden="true">
+            <i class="ph-duotone ph-image-square"></i>
+          </div>
+          <h3>Nenhuma foto encontrada</h3>
+          <p>Envie suas primeiras imagens ou ajuste os filtros de pesquisa.</p>
+          <button class="button button--primary" type="button" id="emptyUploadButton">
+            <i class="ph-duotone ph-upload-simple" aria-hidden="true"></i>
+            <span>Adicionar fotos</span>
+          </button>
+          <p class="empty-state__hint">Também é possível copiar uma imagem e usar o botão <strong>Colar foto</strong>.</p>
+        </div>
+      </section>
+
+      <footer class="site-footer" aria-label="Crédito do desenvolvedor">
+        <div class="site-footer__author">
+          <img
+            class="site-footer__avatar"
+            src="./src/assets/images/edivandro-lima.jpg"
+            alt="Foto de Edivandro Lima"
+            loading="lazy"
+          />
+
+          <div class="site-footer__text">
+            <span>Desenvolvido por</span>
+            <strong>Edivandro Lima</strong>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Dexie.js -->
+  <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
+
+  <!-- FilePond + plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/filepond-plugin-file-validate-type@1/dist/filepond-plugin-file-validate-type.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/filepond-plugin-file-validate-size@2/dist/filepond-plugin-file-validate-size.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/filepond-plugin-image-preview@4/dist/filepond-plugin-image-preview.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/filepond@4/dist/filepond.min.js"></script>
+
+  <!-- browser-image-compression -->
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2/dist/browser-image-compression.min.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Fuse.js -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7"></script>
+
+  <script type="module" src="./src/js/app.js"></script>
+</body>
+</html>
